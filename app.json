@@ -43,6 +43,14 @@
           "photosPermission": "Allow Field Capture to attach photos.",
           "cameraPermission": "Allow Field Capture to take photos."
         }
+      ],
+      [
+        "expo-build-properties",
+        {
+          "android": {
+            "usesCleartextTraffic": true
+          }
+        }
       ]
     ],
     "experiments": {

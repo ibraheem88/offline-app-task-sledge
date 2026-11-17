@@ -15,7 +15,7 @@ export type SyncEngineDeps = {
 };
 
 /** An item is due when it was never tried, or its automatic retry time has passed. */
-export function isDue(item: CaptureItem, now: number): boolean {
+function isDue(item: CaptureItem, now: number): boolean {
   if (item.status === 'pending') return true;
   return item.status === 'error' && item.nextRetryAt !== null && item.nextRetryAt <= now;
 }
