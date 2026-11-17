@@ -5,24 +5,43 @@ import { useSafeAreaInsets } from 'react-native-safe-area-context';
 
 import type { RootStackParamList } from '@/app/navigation';
 import { syncEngine } from '@/app/services';
+import type { CaptureItem, SyncStatus } from '@/shared/types/capture';
 import { Button } from '@/shared/ui/Button';
 import { colors, radius, spacing } from '@/shared/ui/theme';
 
 import { CaptureRow } from '../components/CaptureRow';
 import { useCaptures } from '../hooks/useCaptures';
 import { usePhotoCapture } from '../hooks/usePhotoCapture';
+import { useVoicePlayback } from '../hooks/useVoicePlayback';
 
 type Props = NativeStackScreenProps<RootStackParamList, 'Captures'>;
+
+const summaryLabels: [SyncStatus, string][] = [
+  ['synced', 'synced'],
+  ['syncing', 'uploading'],
+  ['pending', 'waiting'],
+  ['error', 'failed'],
+];
+
+/** e.g. "3 synced · 1 waiting · 1 failed" – zero counts are left out. */
+function syncSummary(items: CaptureItem[]): string {
+  return summaryLabels
+    .map(([status, label]) => [items.filter((item) => item.status === status).length, label] as const)
+    .filter(([count]) => count > 0)
+    .map(([count, label]) => `${count} ${label}`)
+    .join(' · ');
+}
 
 export function CapturesScreen({ navigation }: Props) {
   const items = useCaptures();
   const { capturePhoto, saving } = usePhotoCapture();
+  const { playingId, togglePlayback } = useVoicePlayback();
   const { isConnected } = useNetInfo();
   const insets = useSafeAreaInsets();
   const failedCount = items.filter((item) => item.status === 'error').length;
 
   const choosePhotoSource = () => {
-    Alert.alert('Add photo', undefined, [
+    Alert.alert('Add photo', 'Take a new photo or choose one from your library.', [
       { text: 'Take photo', onPress: () => capturePhoto('camera') },
       { text: 'Choose from library', onPress: () => capturePhoto('library') },
       { text: 'Cancel', style: 'cancel' },
@@ -44,6 +63,8 @@ export function CapturesScreen({ navigation }: Props) {
         </View>
       </View>
 
+      {items.length > 0 && <Text style={styles.summary}>{syncSummary(items)}</Text>}
+
       {failedCount > 0 && (
         <View style={styles.retryAll}>
           <Button
@@ -57,7 +78,14 @@ export function CapturesScreen({ navigation }: Props) {
       <FlatList
         data={items}
         keyExtractor={(item) => item.id}
-        renderItem={({ item }) => <CaptureRow item={item} onRetry={(id) => syncEngine.retry(id)} />}
+        renderItem={({ item }) => (
+          <CaptureRow
+            item={item}
+            isPlaying={playingId === item.id}
+            onRetry={(id) => syncEngine.retry(id)}
+            onTogglePlayback={togglePlayback}
+          />
+        )}
         contentContainerStyle={[styles.list, { paddingBottom: insets.bottom + spacing.lg }]}
         ListEmptyComponent={<Text style={styles.empty}>No captures yet. Take a photo or record a voice note.</Text>}
       />
@@ -84,6 +112,12 @@ const styles = StyleSheet.create({
   },
   action: {
     flex: 1,
+  },
+  summary: {
+    paddingHorizontal: spacing.lg,
+    paddingBottom: spacing.md,
+    fontSize: 13,
+    color: colors.textMuted,
   },
   retryAll: {
     paddingHorizontal: spacing.lg,

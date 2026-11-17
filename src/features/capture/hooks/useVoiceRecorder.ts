@@ -41,6 +41,8 @@ export function useVoiceRecorder(onSaved: () => void) {
     setSaving(true);
     try {
       await recorder.stop();
+      // Leaving recording mode on routes playback to the earpiece on iOS.
+      await setAudioModeAsync({ allowsRecording: false });
       if (!recorder.uri) throw new Error('The recorder did not produce a file.');
       await saveCapture('voice', { uri: recorder.uri, mimeType: 'audio/mp4', extension: 'm4a' });
       onSaved();

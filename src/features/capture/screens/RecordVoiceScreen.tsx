@@ -26,7 +26,12 @@ export function RecordVoiceScreen({ navigation }: Props) {
       <Text style={styles.hint}>{isRecording ? 'Recording…' : 'Tap Record to start'}</Text>
 
       {isRecording ? (
-        <Button title={saving ? 'Saving…' : 'Stop and save'} onPress={stopAndSave} disabled={saving} />
+        <Button
+          title={saving ? 'Saving…' : 'Stop and save'}
+          variant="danger"
+          onPress={stopAndSave}
+          disabled={saving}
+        />
       ) : (
         <Button title="Record" onPress={start} disabled={saving} />
       )}
