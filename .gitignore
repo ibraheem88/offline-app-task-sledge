@@ -44,3 +44,5 @@ example
 
 # local env
 .env
+.claude/
+.vscode/
