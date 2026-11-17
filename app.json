@@ -6,7 +6,6 @@
     "orientation": "portrait",
     "icon": "./assets/images/icon.png",
     "scheme": "fieldcapture",
-    "userInterfaceStyle": "automatic",
     "ios": {
       "icon": "./assets/expo.icon",
       "bundleIdentifier": "com.sledge.fieldcapture"

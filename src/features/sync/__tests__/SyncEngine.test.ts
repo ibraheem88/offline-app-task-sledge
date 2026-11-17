@@ -107,6 +107,15 @@ describe('SyncEngine', () => {
     expect(await repository.get('item-1')).toMatchObject({ status: 'error', attempts: 3, nextRetryAt: null });
   });
 
+  it('retries right away when the clock was moved back past the longest backoff', async () => {
+    const { engine, upload } = setup([makeItem({ status: 'error', attempts: 1, nextRetryAt: 100_000 + 61_000 })]);
+
+    engine.setOnline(true);
+    await engine.sync();
+
+    expect(upload).toHaveBeenCalledTimes(1);
+  });
+
   it('does not schedule a retry for a permanent failure', async () => {
     const { engine, repository } = setup([makeItem()], [{ ok: false, retryable: false, error: 'HTTP 400' }]);
 

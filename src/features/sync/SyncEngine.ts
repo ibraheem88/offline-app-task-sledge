@@ -15,9 +15,11 @@ export type SyncEngineDeps = {
 };
 
 /** An item is due when it was never tried, or its automatic retry time has passed. */
-function isDue(item: CaptureItem, now: number): boolean {
+function isDue(item: CaptureItem, now: number, maxDelayMs: number): boolean {
   if (item.status === 'pending') return true;
-  return item.status === 'error' && item.nextRetryAt !== null && item.nextRetryAt <= now;
+  if (item.status !== 'error' || item.nextRetryAt === null) return false;
+  // A retry further away than the longest backoff means the device clock was moved back.
+  return item.nextRetryAt <= now || item.nextRetryAt - now > maxDelayMs;
 }
 
 /**
@@ -107,7 +109,7 @@ export class SyncEngine {
 
   private async nextDueItem(): Promise<CaptureItem | undefined> {
     const now = this.now();
-    const due = (await this.repository.list()).filter((item) => isDue(item, now));
+    const due = (await this.repository.list()).filter((item) => isDue(item, now, this.backoff.maxDelayMs));
     return due.sort((a, b) => a.createdAt - b.createdAt)[0];
   }
 
