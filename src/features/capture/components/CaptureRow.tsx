@@ -14,7 +14,7 @@ type Props = {
 
 function retryHint(item: CaptureItem): string {
   return item.nextRetryAt
-    ? `Retrying automatically (attempt ${item.attempts} of ${DEFAULT_BACKOFF.maxAttempts})`
+    ? `Failed ${item.attempts} of ${DEFAULT_BACKOFF.maxAttempts} attempts, retrying automatically`
     : 'Automatic retries stopped. Tap Retry.';
 }
 

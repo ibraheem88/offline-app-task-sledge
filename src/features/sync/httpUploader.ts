@@ -24,9 +24,9 @@ export async function uploadCapture(item: CaptureItem): Promise<UploadResult> {
       signal: controller.signal,
     });
     return toUploadResult(response.status, response.body);
-  } catch (error) {
-    if (controller.signal.aborted) throw new Error('Upload timed out');
-    throw error;
+  } catch {
+    // The native error is long and technical; the user only needs to know the server wasn't reached.
+    throw new Error(controller.signal.aborted ? 'Upload timed out' : 'Could not reach the upload server');
   } finally {
     clearTimeout(timeout);
   }

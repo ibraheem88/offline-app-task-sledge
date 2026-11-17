@@ -84,7 +84,7 @@ npx expo run:android --variant release       # terminal 2 (rebuild after changin
    Both show **Pending**.
 4. Kill the app: open the recent apps view and swipe it away. Then reopen it. Both items are still listed as **Pending**.
 5. Turn airplane mode **off**. Within a few seconds the items switch to **Syncing**, then **Synced**. Watch the server terminal for the requests.
-6. Some uploads fail (30% by default). Those items show **Error** with the server message and "Retrying automatically (attempt n of 5)". They retry on their own with growing delays. Tap **Retry** on an item, or **Retry all failed**, to retry straight away.
+6. Some uploads fail (30% by default). Those items show **Error** with the server message and "Failed n of 5 attempts, retrying automatically". They retry on their own with growing delays. Tap **Retry** on an item, or **Retry all failed**, to retry straight away.
 
 Tip: run the server with `FAIL_RATE=1` to watch an item use up all 5 automatic attempts and then wait for a manual retry. Restart it with `FAIL_RATE=0` and tap **Retry all failed**.
 
