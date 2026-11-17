@@ -5,31 +5,28 @@ import { useSafeAreaInsets } from 'react-native-safe-area-context';
 
 import type { RootStackParamList } from '@/app/navigation';
 import { syncEngine } from '@/app/services';
-import type { CaptureItem, SyncStatus } from '@/shared/types/capture';
 import { Button } from '@/shared/ui/Button';
-import { colors, radius, spacing } from '@/shared/ui/theme';
+import { Icon } from '@/shared/ui/Icon';
+import { colors, fontSize, spacing } from '@/shared/ui/theme';
 
 import { CaptureRow } from '../components/CaptureRow';
+import { SyncStatusBar } from '../components/SyncStatusBar';
 import { useCaptures } from '../hooks/useCaptures';
 import { usePhotoCapture } from '../hooks/usePhotoCapture';
 import { useVoicePlayback } from '../hooks/useVoicePlayback';
 
 type Props = NativeStackScreenProps<RootStackParamList, 'Captures'>;
 
-const summaryLabels: [SyncStatus, string][] = [
-  ['synced', 'synced'],
-  ['syncing', 'uploading'],
-  ['pending', 'waiting'],
-  ['error', 'failed'],
-];
-
-/** e.g. "3 synced · 1 waiting · 1 failed" – zero counts are left out. */
-function syncSummary(items: CaptureItem[]): string {
-  return summaryLabels
-    .map(([status, label]) => [items.filter((item) => item.status === status).length, label] as const)
-    .filter(([count]) => count > 0)
-    .map(([count, label]) => `${count} ${label}`)
-    .join(' · ');
+function EmptyState() {
+  return (
+    <View style={styles.empty}>
+      <Icon name="cloud-upload-outline" size={48} color={colors.textMuted} />
+      <Text style={styles.emptyTitle}>No captures yet</Text>
+      <Text style={styles.emptyBody}>
+        Photos and voice notes are saved on this phone first, then upload automatically when you have signal.
+      </Text>
+    </View>
+  );
 }
 
 export function CapturesScreen({ navigation }: Props) {
@@ -38,7 +35,6 @@ export function CapturesScreen({ navigation }: Props) {
   const { playingId, togglePlayback } = useVoicePlayback();
   const { isConnected } = useNetInfo();
   const insets = useSafeAreaInsets();
-  const failedCount = items.filter((item) => item.status === 'error').length;
 
   const choosePhotoSource = () => {
     Alert.alert('Add photo', 'Take a new photo or choose one from your library.', [
@@ -50,30 +46,11 @@ export function CapturesScreen({ navigation }: Props) {
 
   return (
     <View style={styles.screen}>
-      {isConnected === false && (
-        <Text style={styles.offlineBanner}>Offline – captures are saved and will upload later</Text>
-      )}
-
-      <View style={styles.actions}>
-        <View style={styles.action}>
-          <Button title={saving ? 'Saving…' : 'Photo'} onPress={choosePhotoSource} disabled={saving} />
-        </View>
-        <View style={styles.action}>
-          <Button title="Voice note" onPress={() => navigation.navigate('RecordVoice')} />
-        </View>
-      </View>
-
-      {items.length > 0 && <Text style={styles.summary}>{syncSummary(items)}</Text>}
-
-      {failedCount > 0 && (
-        <View style={styles.retryAll}>
-          <Button
-            title={`Retry all failed (${failedCount})`}
-            variant="danger"
-            onPress={() => syncEngine.retryAllFailed()}
-          />
-        </View>
-      )}
+      <SyncStatusBar
+        items={items}
+        isOffline={isConnected === false}
+        onRetryAllFailed={() => syncEngine.retryAllFailed()}
+      />
 
       <FlatList
         data={items}
@@ -86,9 +63,30 @@ export function CapturesScreen({ navigation }: Props) {
             onTogglePlayback={togglePlayback}
           />
         )}
-        contentContainerStyle={[styles.list, { paddingBottom: insets.bottom + spacing.lg }]}
-        ListEmptyComponent={<Text style={styles.empty}>No captures yet. Take a photo or record a voice note.</Text>}
+        contentContainerStyle={[styles.list, items.length === 0 && styles.listEmpty]}
+        ListEmptyComponent={EmptyState}
       />
+
+      {/* Capture actions sit at the bottom, within thumb reach, and are sized for gloves. */}
+      <View style={[styles.actionBar, { paddingBottom: insets.bottom + spacing.md }]}>
+        <View style={styles.action}>
+          <Button
+            title={saving ? 'Saving…' : 'Photo'}
+            icon="camera"
+            size="large"
+            onPress={choosePhotoSource}
+            disabled={saving}
+          />
+        </View>
+        <View style={styles.action}>
+          <Button
+            title="Voice note"
+            icon="microphone"
+            size="large"
+            onPress={() => navigation.navigate('RecordVoice')}
+          />
+        </View>
+      </View>
     </View>
   );
 }
@@ -98,41 +96,40 @@ const styles = StyleSheet.create({
     flex: 1,
     backgroundColor: colors.background,
   },
-  offlineBanner: {
-    backgroundColor: colors.warningSoft,
-    color: colors.warning,
-    textAlign: 'center',
-    fontWeight: '600',
-    padding: spacing.sm,
-  },
-  actions: {
-    flexDirection: 'row',
+  list: {
     gap: spacing.md,
     padding: spacing.lg,
   },
-  action: {
-    flex: 1,
-  },
-  summary: {
-    paddingHorizontal: spacing.lg,
-    paddingBottom: spacing.md,
-    fontSize: 13,
-    color: colors.textMuted,
-  },
-  retryAll: {
-    paddingHorizontal: spacing.lg,
-    paddingBottom: spacing.md,
-  },
-  list: {
-    gap: spacing.sm,
-    paddingHorizontal: spacing.lg,
+  listEmpty: {
+    flexGrow: 1,
+    justifyContent: 'center',
   },
   empty: {
-    marginTop: spacing.xl,
+    alignItems: 'center',
+    gap: spacing.sm,
+    paddingHorizontal: spacing.xl,
+  },
+  emptyTitle: {
+    fontSize: fontSize.title,
+    fontWeight: '600',
+    color: colors.text,
+  },
+  emptyBody: {
+    fontSize: fontSize.body,
+    lineHeight: 22,
     textAlign: 'center',
     color: colors.textMuted,
+  },
+  actionBar: {
+    flexDirection: 'row',
+    gap: spacing.md,
+    paddingHorizontal: spacing.lg,
+    paddingTop: spacing.md,
     backgroundColor: colors.surface,
-    borderRadius: radius.md,
-    padding: spacing.xl,
+    borderTopWidth: 1,
+    borderTopColor: colors.border,
+  },
+  action: {
+    flex: 1,
   },
 });

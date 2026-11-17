@@ -22,10 +22,23 @@ export const spacing = {
   md: 12,
   lg: 16,
   xl: 24,
+  xxl: 32,
 };
 
 export const radius = {
   sm: 6,
   md: 10,
+  lg: 14,
   pill: 999,
 };
+
+// Slightly larger than usual: the app is read outdoors, often at arm's length.
+export const fontSize = {
+  caption: 13,
+  body: 15,
+  title: 17,
+  timer: 56,
+};
+
+/** Minimum touch target (Android 48dp). Field workers often wear gloves. */
+export const touchTarget = 48;

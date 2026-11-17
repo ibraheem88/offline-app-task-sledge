@@ -51,6 +51,7 @@ It has no React Native imports. In the app those are the SQLite repository and t
 - **expo-image-picker:** camera and library in one module; on Android 13+ the system photo picker needs no permission.
 - **expo-audio:** the current Expo recording module (replaces `expo-av`). It records AAC `.m4a`.
 - **expo-asset:** loads the bundled sample voice note for emulators without a microphone.
+- **@expo/vector-icons:** one consistent icon set. It uses expo-font, which is already part of Expo, so it adds no native code, and the icon font ships in the app so it works offline.
 - **expo-crypto:** `randomUUID()` creates the capture id on the device. That id is also the upload's `Idempotency-Key`.
 - **@react-native-community/netinfo:** connectivity events, and "internet reachable" rather than just "has Wi-Fi".
 - **React Navigation (native stack):** routes are defined in code, so folders stay grouped by feature (capture, sync) rather than by screen path.

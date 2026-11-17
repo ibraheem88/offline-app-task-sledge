@@ -1,74 +1,84 @@
 import { Pressable, StyleSheet, Text } from 'react-native';
 
-import { colors, radius, spacing } from './theme';
+import { Icon, type IconName } from './Icon';
+import { colors, fontSize, radius, spacing, touchTarget } from './theme';
 
 type Variant = 'primary' | 'secondary' | 'danger';
+type Size = 'regular' | 'large';
 
 type Props = {
   title: string;
   onPress: () => void;
+  icon?: IconName;
   variant?: Variant;
-  size?: 'regular' | 'small';
+  size?: Size;
   disabled?: boolean;
 };
 
-export function Button({ title, onPress, variant = 'primary', size = 'regular', disabled = false }: Props) {
+export function Button({ title, onPress, icon, variant = 'primary', size = 'regular', disabled = false }: Props) {
+  const { container, labelColor } = variantStyles[variant];
+
   return (
     <Pressable
       accessibilityRole="button"
+      accessibilityState={{ disabled }}
       onPress={onPress}
       disabled={disabled}
       style={({ pressed }) => [
         styles.base,
-        size === 'small' && styles.small,
-        variantStyles[variant].container,
-        (pressed || disabled) && styles.dimmed,
+        size === 'large' && styles.large,
+        container,
+        pressed && styles.pressed,
+        disabled && styles.disabled,
       ]}
     >
-      <Text style={[styles.label, size === 'small' && styles.smallLabel, variantStyles[variant].label]}>
-        {title}
-      </Text>
+      {icon && <Icon name={icon} size={size === 'large' ? 24 : 20} color={labelColor} />}
+      <Text style={[styles.label, size === 'large' && styles.largeLabel, { color: labelColor }]}>{title}</Text>
     </Pressable>
   );
 }
 
 const styles = StyleSheet.create({
   base: {
+    minHeight: touchTarget,
+    flexDirection: 'row',
     alignItems: 'center',
     justifyContent: 'center',
-    paddingVertical: spacing.md,
+    gap: spacing.sm,
     paddingHorizontal: spacing.lg,
     borderRadius: radius.md,
     borderWidth: 1,
   },
-  small: {
-    paddingVertical: spacing.xs,
-    paddingHorizontal: spacing.md,
-    borderRadius: radius.sm,
+  large: {
+    minHeight: 64,
+    borderRadius: radius.lg,
   },
   label: {
-    fontSize: 16,
+    fontSize: fontSize.body,
     fontWeight: '600',
   },
-  smallLabel: {
-    fontSize: 13,
+  largeLabel: {
+    fontSize: fontSize.title,
   },
-  dimmed: {
-    opacity: 0.6,
+  pressed: {
+    opacity: 0.75,
+  },
+  disabled: {
+    opacity: 0.45,
   },
 });
 
 const variantStyles = {
-  primary: StyleSheet.create({
+  primary: {
     container: { backgroundColor: colors.primary, borderColor: colors.primary },
-    label: { color: colors.primaryText },
-  }),
-  secondary: StyleSheet.create({
+    labelColor: colors.primaryText,
+  },
+  secondary: {
     container: { backgroundColor: colors.surface, borderColor: colors.border },
-    label: { color: colors.text },
-  }),
-  danger: StyleSheet.create({
+    labelColor: colors.text,
+  },
+  danger: {
     container: { backgroundColor: colors.surface, borderColor: colors.danger },
-    label: { color: colors.danger },
-  }),
+    labelColor: colors.danger,
+  },
 };

@@ -76,17 +76,17 @@ npx expo run:android --variant release       # terminal 2 (rebuild after changin
 ```
 
 1. Open the app. The list is empty.
-2. Turn on **airplane mode** on the emulator: swipe down from the top and tap Airplane mode. The app shows an "Offline" banner.
+2. Turn on **airplane mode** on the emulator: swipe down from the top and tap Airplane mode. The status bar at the top turns yellow and says "Offline".
 3. Capture two items:
    - **Photo:** choose "Choose from library", or "Take photo" for the emulator's virtual camera.
-   - **Voice note:** tap Record, then Stop and save. If the emulator has no microphone, tap **Use sample recording**.
+   - **Voice note:** tap the round microphone button, then tap it again to stop and save. If the emulator has no microphone, tap **No microphone? Use a sample recording**.
 
    Both show **Pending**.
 4. Kill the app: open the recent apps view and swipe it away. Then reopen it. Both items are still listed as **Pending**.
 5. Turn airplane mode **off**. Within a few seconds the items switch to **Syncing**, then **Synced**. Watch the server terminal for the requests.
-6. Some uploads fail (30% by default). Those items show **Error** with the server message and "Failed n of 5 attempts, retrying automatically". They retry on their own with growing delays. Tap **Retry** on an item, or **Retry all failed**, to retry straight away.
+6. Some uploads fail (30% by default). Those items show **Error** with the server message and "Failed n of 5 attempts, retrying automatically". They retry on their own with growing delays. Tap **Retry** on an item, or **Retry all** in the red bar at the top, to retry straight away.
 
-Tip: run the server with `FAIL_RATE=1` to watch an item use up all 5 automatic attempts and then wait for a manual retry. Restart it with `FAIL_RATE=0` and tap **Retry all failed**.
+Tip: run the server with `FAIL_RATE=1` to watch an item use up all 5 automatic attempts and then wait for a manual retry. Restart it with `FAIL_RATE=0` and tap **Retry all**.
 
 ## Scripts
 
@@ -124,4 +124,4 @@ assets/mock/voice-note.m4a   fallback recording for devices without a microphone
 - **Items stay Pending after airplane mode is off.** The app only uploads when NetInfo reports the internet as reachable. Check that the emulator has internet (open a website in Chrome) and that the server URL is right for where the app runs.
 - **Every upload fails with a network error.** The server isn't running, or the URL is wrong. Android emulators can't use `localhost`; use `10.0.2.2`.
 - **Jest or Metro crashes with a watchman `libfmt` error.** Your Homebrew watchman install is broken. Run `brew reinstall watchman`, or run tests with `npx jest --no-watchman`.
-- **Recording fails on the emulator.** In the emulator's Extended controls → Microphone, enable "Virtual microphone uses host audio input", or use **Use sample recording**.
+- **Recording fails on the emulator.** In the emulator's Extended controls → Microphone, enable "Virtual microphone uses host audio input", or tap **No microphone? Use a sample recording**.

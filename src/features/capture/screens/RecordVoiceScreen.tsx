@@ -1,13 +1,16 @@
 import type { NativeStackScreenProps } from '@react-navigation/native-stack';
-import { StyleSheet, Text, View } from 'react-native';
+import { ActivityIndicator, Pressable, StyleSheet, Text, View } from 'react-native';
+import { useSafeAreaInsets } from 'react-native-safe-area-context';
 
 import type { RootStackParamList } from '@/app/navigation';
-import { Button } from '@/shared/ui/Button';
-import { colors, spacing } from '@/shared/ui/theme';
+import { Icon } from '@/shared/ui/Icon';
+import { colors, fontSize, radius, spacing, touchTarget } from '@/shared/ui/theme';
 
 import { useVoiceRecorder } from '../hooks/useVoiceRecorder';
 
 type Props = NativeStackScreenProps<RootStackParamList, 'RecordVoice'>;
+
+const RECORD_BUTTON_SIZE = 112;
 
 function formatDuration(millis: number): string {
   const totalSeconds = Math.floor(millis / 1000);
@@ -19,29 +22,61 @@ function formatDuration(millis: number): string {
 export function RecordVoiceScreen({ navigation }: Props) {
   const { isRecording, durationMillis, recordingError, saving, start, stopAndSave, saveSample } =
     useVoiceRecorder(() => navigation.goBack());
+  const insets = useSafeAreaInsets();
+
+  const hint = saving ? 'Saving…' : isRecording ? 'Tap to stop and save' : 'Tap to start recording';
 
   return (
-    <View style={styles.screen}>
-      <Text style={styles.timer}>{formatDuration(isRecording ? durationMillis : 0)}</Text>
-      <Text style={styles.hint}>{isRecording ? 'Recording…' : 'Tap Record to start'}</Text>
+    <View style={[styles.screen, { paddingBottom: insets.bottom + spacing.lg }]}>
+      <View style={styles.center}>
+        <View style={styles.statusLine}>
+          {isRecording && <View style={styles.recordingDot} />}
+          <Text style={[styles.status, isRecording && styles.statusRecording]}>
+            {isRecording ? 'Recording' : 'Ready'}
+          </Text>
+        </View>
 
-      {isRecording ? (
-        <Button
-          title={saving ? 'Saving…' : 'Stop and save'}
-          variant="danger"
-          onPress={stopAndSave}
+        <Text style={styles.timer}>{formatDuration(isRecording ? durationMillis : 0)}</Text>
+
+        <Pressable
+          accessibilityRole="button"
+          accessibilityLabel={isRecording ? 'Stop and save recording' : 'Start recording'}
+          accessibilityState={{ disabled: saving }}
+          onPress={isRecording ? stopAndSave : start}
           disabled={saving}
-        />
-      ) : (
-        <Button title="Record" onPress={start} disabled={saving} />
-      )}
+          style={({ pressed }) => [
+            styles.recordButton,
+            isRecording && styles.recordButtonActive,
+            (pressed || saving) && styles.pressed,
+          ]}
+        >
+          {saving ? (
+            <ActivityIndicator size="large" color={colors.primaryText} />
+          ) : (
+            <Icon name={isRecording ? 'stop' : 'microphone'} size={48} color={colors.primaryText} />
+          )}
+        </Pressable>
 
-      {recordingError && <Text style={styles.error}>Recording failed: {recordingError}</Text>}
+        <Text style={styles.hint}>{hint}</Text>
 
-      <View style={styles.fallback}>
-        <Text style={styles.hint}>No microphone (e.g. on an emulator)?</Text>
-        <Button title="Use sample recording" variant="secondary" onPress={saveSample} disabled={saving || isRecording} />
+        {recordingError && (
+          <View style={styles.errorBox}>
+            <Icon name="alert-circle" size={20} color={colors.danger} />
+            <Text style={styles.errorText}>
+              Recording failed: {recordingError} You can save a sample recording instead.
+            </Text>
+          </View>
+        )}
       </View>
+
+      <Pressable
+        accessibilityRole="button"
+        onPress={saveSample}
+        disabled={saving || isRecording}
+        style={({ pressed }) => [styles.sampleLink, (pressed || saving || isRecording) && styles.pressed]}
+      >
+        <Text style={styles.sampleText}>No microphone? Use a sample recording</Text>
+      </Pressable>
     </View>
   );
 }
@@ -49,28 +84,80 @@ export function RecordVoiceScreen({ navigation }: Props) {
 const styles = StyleSheet.create({
   screen: {
     flex: 1,
-    gap: spacing.lg,
-    padding: spacing.xl,
-    justifyContent: 'center',
+    paddingHorizontal: spacing.xl,
     backgroundColor: colors.background,
   },
+  center: {
+    flex: 1,
+    alignItems: 'center',
+    justifyContent: 'center',
+    gap: spacing.lg,
+  },
+  statusLine: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: spacing.sm,
+  },
+  recordingDot: {
+    width: 10,
+    height: 10,
+    borderRadius: 5,
+    backgroundColor: colors.danger,
+  },
+  status: {
+    fontSize: fontSize.body,
+    fontWeight: '600',
+    color: colors.textMuted,
+  },
+  statusRecording: {
+    color: colors.danger,
+  },
   timer: {
-    fontSize: 48,
+    fontSize: fontSize.timer,
     fontWeight: '300',
-    textAlign: 'center',
     color: colors.text,
     fontVariant: ['tabular-nums'],
   },
+  recordButton: {
+    width: RECORD_BUTTON_SIZE,
+    height: RECORD_BUTTON_SIZE,
+    borderRadius: RECORD_BUTTON_SIZE / 2,
+    alignItems: 'center',
+    justifyContent: 'center',
+    backgroundColor: colors.primary,
+    marginTop: spacing.lg,
+  },
+  recordButtonActive: {
+    backgroundColor: colors.danger,
+  },
+  pressed: {
+    opacity: 0.6,
+  },
   hint: {
-    textAlign: 'center',
+    fontSize: fontSize.body,
     color: colors.textMuted,
   },
-  error: {
-    textAlign: 'center',
+  errorBox: {
+    flexDirection: 'row',
+    alignItems: 'flex-start',
+    gap: spacing.sm,
+    padding: spacing.md,
+    borderRadius: radius.md,
+    backgroundColor: colors.dangerSoft,
+  },
+  errorText: {
+    flex: 1,
+    fontSize: fontSize.body,
     color: colors.danger,
   },
-  fallback: {
-    marginTop: spacing.xl,
-    gap: spacing.sm,
+  sampleLink: {
+    minHeight: touchTarget,
+    alignItems: 'center',
+    justifyContent: 'center',
+  },
+  sampleText: {
+    fontSize: fontSize.body,
+    fontWeight: '600',
+    color: colors.primary,
   },
 });
